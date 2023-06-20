@@ -1,38 +1,26 @@
-import time
-from SX127x.LoRa import *
-from SX127x.board_config import BOARD
+from time import sleep
+from pyLoRa.pyLoRa import LoRa
 
-BOARD.setup()
+# Create LoRa object
+lora = LoRa()
 
-class LoRaReceiver(LoRa):
-    def __init__(self, verbose=False):
-        super(LoRaReceiver, self).__init__(verbose)
-        self.set_mode(MODE.SLEEP)
-        self.set_dio_mapping([0] * 6)
-
-    def on_rx_done(self):
-        print("Received: {}".format(self.read_payload()))
-        self.set_mode(MODE.SLEEP)
-        self.reset_ptr_rx()
-        self.set_mode(MODE.RXCONT)
-
-    def start(self):
-        self.reset_ptr_rx()
-        self.set_mode(MODE.RXCONT)
-        while True:
-            time.sleep(0.1)
-
-lora = LoRaReceiver(verbose=False)
+# Set frequency, bandwidth, and spreading factor
 lora.set_frequency(915000000)
+lora.set_bandwidth(125000)
 lora.set_spreading_factor(7)
-lora.set_bw(BW.BW125)
-lora.set_cr(CR.CR45)
-lora.set_rx_crc(True)
 
-print("LoRa Receiver")
-try:
-    lora.start()
-except KeyboardInterrupt:
-    pass
+# Enable CRC checking
+lora.set_crc(True)
 
-BOARD.teardown()
+# Initialize LoRa
+lora.init()
+
+# Infinite loop to receive LoRa messages
+while True:
+    # Check if a message has been received
+    if lora.received_packet():
+        # Read the message and print it
+        message = lora.read_packet()
+        print("Received message: {}".format(message))
+    
+    sleep(0.1)
